@@ -6,33 +6,29 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import jp.ac.it_college.std.s22007.tecnos_assigment.Calendar.Calendar
-import java.time.LocalDate
-import java.time.YearMonth
+import jp.ac.it_college.std.s22007.tecnos_assigment.Calendar.CalendarDisplay
+import jp.ac.it_college.std.s22007.tecnos_assigment.Schedule.ScheduleScene
 
 object Destination {
     const val CALENDAR = "calendar"
+    const val SCHEDULE = "schedule"
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Navigation(
     navController: NavHostController = rememberNavController(),
 ) {
-    var calendarText by remember { mutableStateOf("")}
     Scaffold(
         topBar = {
             TopAppBar(title = {
-                Text(text = calendarText)
+                Text(text = "┌(┌＾o＾)┐ﾎﾓｫ…")
             })
         }
     ) {
@@ -42,11 +38,16 @@ fun Navigation(
             modifier = Modifier.padding(it)
         ){
             composable(Destination.CALENDAR){
-                Calendar(
-                    yearMonth = YearMonth.now(),
-                    selectedDate = LocalDate.now(),
-                    onDateSelected = {}
+                CalendarDisplay(
+                    onClickScheduleButton = {
+                        navController.navigate(Destination.SCHEDULE)
+                    }
                 )
+            }
+            composable(Destination.SCHEDULE){
+                ScheduleScene {
+                    navController.navigate(Destination.CALENDAR)
+                }
             }
         }
     }

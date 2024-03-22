@@ -1,181 +1,181 @@
 package jp.ac.it_college.std.s22007.tecnos_assigment.Calendar
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.consumeAllChanges
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kizitonwose.calendar.compose.HorizontalCalendar
+import com.kizitonwose.calendar.compose.rememberCalendarState
+import com.kizitonwose.calendar.core.CalendarDay
+import com.kizitonwose.calendar.core.DayPosition
+import com.kizitonwose.calendar.core.OutDateStyle
+import com.kizitonwose.calendar.core.daysOfWeek
+import jp.ac.it_college.std.s22007.tecnos_assigment.ui.theme.Tecnos_AssigmentTheme
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun CalendarHeader(yearMonth: YearMonth) {
-    Text(
-        text = "${yearMonth.year}年${yearMonth.month.value}月",
-        style = MaterialTheme.typography.displayMedium,
-        modifier = Modifier.padding(vertical = 8.dp)
-    )
-}
-
-
-@Composable
-fun Calendar(
+fun CalendarDisplay(
     modifier: Modifier = Modifier,
-    yearMonth: YearMonth,
-    selectedDate: LocalDate?,
-    onDateSelected: (LocalDate) -> Unit,
-
+    onDayClick: (LocalDate) -> Unit = {},
+    onClickScheduleButton: () -> Unit = {},
 ) {
-    val firstDayOfMonth = yearMonth.atDay(1)
-    val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7
-    val weeksInMonth = yearMonth.lengthOfMonth() / 7 + 1
+    // 現在の年月
+    val currentMonth = remember { YearMonth.now() }
+    // 現在より前の年月
+    val startMonth = remember { currentMonth.minusMonths(24) }
+    // 現在より後の年月
+    val endMonth = remember { currentMonth.plusMonths(24) }
+    // 曜日
+    val daysOfWeek = remember { daysOfWeek() }
 
-    Surface(modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        )
-        {
-            CalendarHeader(yearMonth = yearMonth) // 追加: カレンダーのヘッダー部分に年月を表示
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+    val selectedDate = remember { mutableStateOf<LocalDate?>(null) }
+    val scheduleList = remember { mutableStateOf<List<String>>(emptyList()) }
+
+    // カレンダーの状態を持つ
+    val state = rememberCalendarState(
+        startMonth = startMonth,
+        endMonth = endMonth,
+        firstVisibleMonth = currentMonth,
+        firstDayOfWeek = daysOfWeek.first(),
+        outDateStyle = OutDateStyle.EndOfGrid
+    )
+
+    Surface {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                val daysOfWeek = listOf("日", "月", "火", "水", "木", "金", "土")
-                for (dayOfWeek in daysOfWeek) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
-                        text = dayOfWeek,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .weight(1f)
+                        text = "${state.firstVisibleMonth.yearMonth}",
+                        modifier = Modifier.padding(10.dp),
+                        fontSize = 40.sp,
                     )
                 }
             }
-            repeat(weeksInMonth) { week ->
-                Row(
-                    modifier =
-                    Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+            DaysOfWeekTitle(daysOfWeek = daysOfWeek)
+
+            HorizontalCalendar(
+                state = state,
+                dayContent = { date ->
+                    Day(
+                        date,
+                        onDayClick,
+                        onScheduleAdded = { schedule -> updateScheduleList(schedule, scheduleList) },
+                        onClickScheduleButton = onClickScheduleButton
+                    )
+                },
+            )
+
+            selectedDate.value?.let { date ->
+                Text(
+                    text = "選択した日付: ${date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))}",
+                    modifier = Modifier.padding(8.dp)
+                )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
                 ) {
-                    repeat(7) { day ->
-                        val currentDay = (week * 7 + day + 1) - firstDayOfWeek
-                        val currentDate =
-                            if (currentDay > 0 && currentDay <= yearMonth.lengthOfMonth()) {
-                                yearMonth.atDay(currentDay)
-                            } else {
-                                null
-                            }
-                        CalendarDay(
-                            date = currentDate,
-                            selectedDate = selectedDate,
-                            onDateSelected = { onDateSelected(it) }
+                    items(scheduleList.value) { schedule ->
+                        Text(
+                            text = schedule,
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(8.dp)
                         )
                     }
                 }
-
             }
         }
     }
 }
 
-
 @Composable
-fun CalendarDay(
-    date: LocalDate?,
-    selectedDate: LocalDate?,
-    onDateSelected: (LocalDate) -> Unit
+fun Day(
+    day: CalendarDay,
+    onDayClick: (LocalDate) -> Unit,
+    onScheduleAdded: (String) -> Unit,
+    onClickScheduleButton: () -> Unit
+
 ) {
-    val isSelected = date == selectedDate
-    val isToday = date == LocalDate.now()
-
-    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
-    val contentColor =
-        if (isSelected) MaterialTheme.colorScheme.onPrimary
-        else if (isToday) MaterialTheme.colorScheme.secondary
-        else MaterialTheme.colorScheme.onSurface
-
-    val backgroundColorForDayOfWeek = when (date?.dayOfWeek) {
-        DayOfWeek.SATURDAY -> Color.Blue
-        DayOfWeek.SUNDAY -> Color.Red
-        else -> contentColor
-    }
     Box(
         modifier = Modifier
-            .padding(4.dp)
-            .size(40.dp)
-            .background(color = backgroundColor, shape = CircleShape)
-            .clickable { date?.let(onDateSelected) },
+            .aspectRatio(1f)
+            .clickable {
+                onDayClick(day.date) // 日付が選択されたことを通知
+                onClickScheduleButton() // 画面遷移を行う
+            },
         contentAlignment = Alignment.Center
     ) {
+        val textColor = when (day.date.dayOfWeek) {
+            DayOfWeek.SATURDAY -> Color.Blue // 土曜日の場合の色
+            DayOfWeek.SUNDAY -> Color.Red // 日曜日の場合の色
+            else -> if (day.position == DayPosition.MonthDate) Color.Black else Color.Gray
 
+        }
         Text(
-            text = date?.dayOfMonth?.toString() ?: "",
-            style = MaterialTheme.typography.bodyLarge,
-            color = backgroundColorForDayOfWeek,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(5.dp),
+            text = day.date.dayOfMonth.toString(),
+            // ここで今月でないものの日付をグレーアウトさせている
+            color = textColor
         )
     }
 }
-
 @Composable
-fun CalendarManagerLayout(
-    modifier: Modifier = Modifier,
-    onSwipeLeft: () -> Unit,
-    onSwipeRight: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    Box(
-        modifier = modifier
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures { change, dragAmount ->
-                    if (dragAmount > 100) {
-                        onSwipeLeft()
-                        change.consumeAllChanges()
-                    } else if (dragAmount < -100) {
-                        onSwipeRight()
-                        change.consumeAllChanges()
-                    }
-                }
+fun DaysOfWeekTitle(daysOfWeek: List<DayOfWeek>) {
+    Column(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+
+        Row {
+            val daysOfWeek = listOf("日", "月", "火", "水", "木", "金", "土")
+            for (dayOfWeek in daysOfWeek) {
+                Text(
+                    text = dayOfWeek,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .weight(1f)
+                )
             }
-    ) {
-        content()
+        }
     }
 }
 
-
-
-
-
-@Preview
-@Composable
-fun CalendarPreview() {
-    Calendar(yearMonth = YearMonth.now(), selectedDate = null) {}
+fun updateScheduleList(schedule: String, scheduleList: MutableState<List<String>>) {
+    scheduleList.value = scheduleList.value + schedule
 }
 
-
+@Preview(showBackground = true)
+@Composable
+fun StartScenePreview() {
+    Tecnos_AssigmentTheme {
+        CalendarDisplay()
+    }
+}

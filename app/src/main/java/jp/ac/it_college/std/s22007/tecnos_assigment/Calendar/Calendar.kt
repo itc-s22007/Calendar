@@ -1,5 +1,6 @@
 package jp.ac.it_college.std.s22007.tecnos_assigment.Calendar
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,6 +31,8 @@ import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.OutDateStyle
 import com.kizitonwose.calendar.core.daysOfWeek
+import jp.ac.it_college.std.s22007.tecnos_assigment.holidayAPI.GetHoliday
+import jp.ac.it_college.std.s22007.tecnos_assigment.holidayAPI.Holiday
 import jp.ac.it_college.std.s22007.tecnos_assigment.ui.theme.Tecnos_AssigmentTheme
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -88,7 +92,8 @@ fun CalendarDisplay(
                         date,
                         onDayClick,
                         onScheduleAdded = { schedule -> updateScheduleList(schedule, scheduleList) },
-                        onClickScheduleButton = onClickScheduleButton
+                        onClickScheduleButton = onClickScheduleButton,
+                        holidays = GetHoliday()
                     )
                 },
             )
@@ -121,8 +126,8 @@ fun Day(
     day: CalendarDay,
     onDayClick: (LocalDate) -> Unit,
     onScheduleAdded: (String) -> Unit,
-    onClickScheduleButton: () -> Unit
-
+    onClickScheduleButton: () -> Unit,
+    holidays: List<Holiday>
 ) {
     Box(
         modifier = Modifier
@@ -139,10 +144,13 @@ fun Day(
             else -> if (day.position == DayPosition.MonthDate) Color.Black else Color.Gray
 
         }
+        val isHoliday = holidays.any { holiday ->
+            holiday.date == day.date.toString()
+        }
         Text(
             text = day.date.dayOfMonth.toString(),
             // ここで今月でないものの日付をグレーアウトさせている
-            color = textColor
+            color = if (isHoliday) Color.Red else textColor // 祝日の場合は赤色にする
         )
     }
 }
@@ -166,6 +174,21 @@ fun DaysOfWeekTitle(daysOfWeek: List<DayOfWeek>) {
             }
         }
     }
+}
+
+@Composable
+fun CalendarDay(day: CalendarDay, holidays: List<Holiday>, textColor: Color) { // 祝日表示変えた
+    val isHoliday = holidays.any { holiday ->
+        holiday.date == day.date.toString()
+    }
+
+    Text(
+        modifier = Modifier
+            .background(color = if (isHoliday) Color.Yellow else Color.Transparent)
+            .padding(top = 3.dp, start = 4.dp),
+        text = day.date.dayOfMonth.toString(),
+        color = textColor
+    )
 }
 
 fun updateScheduleList(schedule: String, scheduleList: MutableState<List<String>>) {

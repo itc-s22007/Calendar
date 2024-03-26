@@ -140,10 +140,6 @@ fun Day(
                 selectionDay = day.date
                 selection = day
                 onDayClick(selection!!)
-//            .clickable {
-//                selectionDay = day.date
-//                onDayClick(day) // 日付が選択されたことを通知
-//                onClickScheduleButton() // 画面遷移を行う
             },
         contentAlignment = Alignment.Center
     ) {
@@ -155,6 +151,7 @@ fun Day(
         val isHoliday = holidays.any { holiday ->
             holiday.date == day.date.toString()
         }
+
         Text(
             text = day.date.dayOfMonth.toString(),
             // ここで今月でないものの日付をグレーアウトさせている

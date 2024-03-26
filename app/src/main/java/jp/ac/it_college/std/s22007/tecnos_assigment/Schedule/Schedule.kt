@@ -27,7 +27,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.DayPosition
-import jp.ac.it_college.std.s22007.tecnos_assigment.Calendar.CalendarDisplay
 import jp.ac.it_college.std.s22007.tecnos_assigment.Firebase.addScheduleToFireStore
 import jp.ac.it_college.std.s22007.tecnos_assigment.Firebase.getScheduleData
 import jp.ac.it_college.std.s22007.tecnos_assigment.ui.theme.Tecnos_AssigmentTheme
@@ -106,78 +105,6 @@ fun ScheduleScene(
         }
     }
 }
-
-
-//@Composable
-//fun ScheduleScene(
-//    onClickCalendarButton: () -> Unit = {},
-//    calendarDay: CalendarDay
-//) {
-//    var showDialog by remember { mutableStateOf(false) }
-//    val selectedDate = remember { mutableStateOf(LocalDate.now()) } // mutableStateOfでselectedDateを作成
-//    var scheduleData by remember { mutableStateOf<List<Pair<LocalTime, String>>>(emptyList()) }
-//
-//    // Firestore からデータを取得する
-//    LaunchedEffect(Unit) {
-//        val allScheduleData = getScheduleData()
-//        // 日付が選択された日付と一致するスケジュールのみを抽出する
-//        scheduleData = allScheduleData
-//            .filter { it["date"] == selectedDate.value.toString() } // selectedDate.valueを使ってselectedDateの値にアクセス
-//            .map { schedule ->
-//                val time = LocalTime.parse(schedule["time"].toString())
-//                val scheduleText = schedule["schedule"].toString()
-//                time to scheduleText
-//            }
-//    }
-//    Surface {
-//        Column {
-//            Row(
-//                horizontalArrangement = Arrangement.End,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Button(
-//                    onClick = { onClickCalendarButton() },
-//                    colors = ButtonDefaults.buttonColors(Color.Transparent),
-//                ) {
-//                    Text("＜",
-//                        fontSize = 20.sp,
-//                        color = Color.Black
-//                    )
-//                }
-//                Text("")
-//                Spacer(modifier = Modifier.weight(1f))
-//                Button(
-//                    onClick = {
-//                        showDialog = true
-//                    }
-//                ) {
-//                    Text("追加＋")
-//                }
-//                if (showDialog) {
-//                    ScheduleDialog(
-//                        date = selectedDate.value, // selectedDate.valueを使ってselectedDateの値にアクセス
-//                        onDialogDismiss = { showDialog = false },
-//                        onScheduleAdded = { schedule ->
-//                            // 新しいスケジュールが追加されたときにFirestoreにも登録する
-//                            addScheduleToFireStore(
-//                                date = selectedDate.value.toString(), // selectedDate.valueを使ってselectedDateの値にアクセス
-//                                time = schedule.first.toString(),
-//                                schedule = schedule.second
-//                            )
-//                        }
-//                    )
-//                }
-//            }
-//            // 選択した日付の日に関連する予定のみを表示する
-//            scheduleData.forEach { (time, schedule) ->
-//                Text(
-//                    "$time - $schedule",
-//                    fontSize = 20.sp
-//                )
-//            }
-//        }
-//    }
-//}
 
 @Composable
 fun ScheduleDialog(

@@ -1,20 +1,9 @@
 package jp.ac.it_college.std.s22007.tecnos_assigment.Firebase
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-import com.kizitonwose.calendar.core.CalendarDay
 import kotlinx.coroutines.tasks.await
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.YearMonth
-import java.time.ZoneOffset
-import java.util.Calendar
 
 fun addScheduleToFireStore(date: String, time: String, schedule: String) {
     val db = Firebase.firestore

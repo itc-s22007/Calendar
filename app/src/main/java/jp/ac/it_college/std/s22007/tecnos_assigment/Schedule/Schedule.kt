@@ -2,8 +2,10 @@ package jp.ac.it_college.std.s22007.tecnos_assigment.Schedule
 
 import android.app.TimePickerDialog
 import android.widget.TimePicker
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -17,11 +19,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import com.kizitonwose.calendar.core.CalendarDay
+import com.kizitonwose.calendar.core.DayPosition
+import jp.ac.it_college.std.s22007.tecnos_assigment.Calendar.CalendarDisplay
 import jp.ac.it_college.std.s22007.tecnos_assigment.Firebase.addScheduleToFireStore
 import jp.ac.it_college.std.s22007.tecnos_assigment.Firebase.getScheduleData
 import jp.ac.it_college.std.s22007.tecnos_assigment.ui.theme.Tecnos_AssigmentTheme
@@ -32,54 +38,57 @@ import java.util.Calendar
 
 @Composable
 fun ScheduleScene(
-    onClickCalendarButton: () -> Unit = {}
+    onClickCalendarButton: () -> Unit = {},
+    calendarDay: CalendarDay // CalendarDayを引数として受け取る
 ) {
     var showDialog by remember { mutableStateOf(false) }
-    val selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    var scheduleData by remember { mutableStateOf<Map<LocalDate, List<Pair<LocalTime, String>>>>(emptyMap()) }
+    val selectedDate = remember { mutableStateOf(calendarDay.date) } // 選択された日付を保持する
+    var scheduleData by remember { mutableStateOf<List<Pair<LocalTime, String>>>(emptyList()) }
 
     // Firestore からデータを取得する
     LaunchedEffect(Unit) {
         val allScheduleData = getScheduleData()
-        // 日付ごとに整理する
+        // 日付が選択された日付と一致するスケジュールのみを抽出する
         scheduleData = allScheduleData
-            .groupBy { LocalDate.parse(it["date"].toString()) }
-            .mapValues { entry ->
-                entry.value.map {
-                    val time = LocalTime.parse(it["time"].toString())
-                    val schedule = it["schedule"].toString()
-                    time to schedule
-                }
+            .filter { it["date"] == selectedDate.value.toString() } // selectedDate.valueを使ってselectedDateの値にアクセス
+            .map { schedule ->
+                val time = LocalTime.parse(schedule["time"].toString())
+                val scheduleText = schedule["schedule"].toString()
+                time to scheduleText
             }
     }
-
     Surface {
         Column {
-            Row {
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Button(
                     onClick = { onClickCalendarButton() },
                     colors = ButtonDefaults.buttonColors(Color.Transparent),
                 ) {
                     Text("＜",
-                        fontSize = 30.sp,
+                        fontSize = 20.sp,
                         color = Color.Black
                     )
                 }
+                Text("")
+                Spacer(modifier = Modifier.weight(1f))
                 Button(
                     onClick = {
                         showDialog = true
                     }
                 ) {
-                    Text("予定を追加する")
+                    Text("追加＋")
                 }
                 if (showDialog) {
                     ScheduleDialog(
-                        date = selectedDate,
+                        date = selectedDate.value, // selectedDate.valueを使ってselectedDateの値にアクセス
                         onDialogDismiss = { showDialog = false },
                         onScheduleAdded = { schedule ->
                             // 新しいスケジュールが追加されたときにFirestoreにも登録する
                             addScheduleToFireStore(
-                                date = selectedDate.toString(),
+                                date = selectedDate.value.toString(), // selectedDate.valueを使ってselectedDateの値にアクセス
                                 time = schedule.first.toString(),
                                 schedule = schedule.second
                             )
@@ -88,7 +97,7 @@ fun ScheduleScene(
                 }
             }
             // 選択した日付の日に関連する予定のみを表示する
-            scheduleData[selectedDate]?.forEach { (time, schedule) ->
+            scheduleData.forEach { (time, schedule) ->
                 Text(
                     "$time - $schedule",
                     fontSize = 20.sp
@@ -97,6 +106,78 @@ fun ScheduleScene(
         }
     }
 }
+
+
+//@Composable
+//fun ScheduleScene(
+//    onClickCalendarButton: () -> Unit = {},
+//    calendarDay: CalendarDay
+//) {
+//    var showDialog by remember { mutableStateOf(false) }
+//    val selectedDate = remember { mutableStateOf(LocalDate.now()) } // mutableStateOfでselectedDateを作成
+//    var scheduleData by remember { mutableStateOf<List<Pair<LocalTime, String>>>(emptyList()) }
+//
+//    // Firestore からデータを取得する
+//    LaunchedEffect(Unit) {
+//        val allScheduleData = getScheduleData()
+//        // 日付が選択された日付と一致するスケジュールのみを抽出する
+//        scheduleData = allScheduleData
+//            .filter { it["date"] == selectedDate.value.toString() } // selectedDate.valueを使ってselectedDateの値にアクセス
+//            .map { schedule ->
+//                val time = LocalTime.parse(schedule["time"].toString())
+//                val scheduleText = schedule["schedule"].toString()
+//                time to scheduleText
+//            }
+//    }
+//    Surface {
+//        Column {
+//            Row(
+//                horizontalArrangement = Arrangement.End,
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                Button(
+//                    onClick = { onClickCalendarButton() },
+//                    colors = ButtonDefaults.buttonColors(Color.Transparent),
+//                ) {
+//                    Text("＜",
+//                        fontSize = 20.sp,
+//                        color = Color.Black
+//                    )
+//                }
+//                Text("")
+//                Spacer(modifier = Modifier.weight(1f))
+//                Button(
+//                    onClick = {
+//                        showDialog = true
+//                    }
+//                ) {
+//                    Text("追加＋")
+//                }
+//                if (showDialog) {
+//                    ScheduleDialog(
+//                        date = selectedDate.value, // selectedDate.valueを使ってselectedDateの値にアクセス
+//                        onDialogDismiss = { showDialog = false },
+//                        onScheduleAdded = { schedule ->
+//                            // 新しいスケジュールが追加されたときにFirestoreにも登録する
+//                            addScheduleToFireStore(
+//                                date = selectedDate.value.toString(), // selectedDate.valueを使ってselectedDateの値にアクセス
+//                                time = schedule.first.toString(),
+//                                schedule = schedule.second
+//                            )
+//                        }
+//                    )
+//                }
+//            }
+//            // 選択した日付の日に関連する予定のみを表示する
+//            scheduleData.forEach { (time, schedule) ->
+//                Text(
+//                    "$time - $schedule",
+//                    fontSize = 20.sp
+//                )
+//            }
+//        }
+//    }
+//}
 
 @Composable
 fun ScheduleDialog(
@@ -161,11 +242,15 @@ fun ScheduleDialog(
     )
 }
 
+
 @Preview
 @Composable
 fun ScheduleScenePreview() {
     Tecnos_AssigmentTheme {
-        ScheduleScene()
+        ScheduleScene(
+            onClickCalendarButton = {},
+            calendarDay = CalendarDay(LocalDate.now(), DayPosition.MonthDate)
+        )
     }
 }
 

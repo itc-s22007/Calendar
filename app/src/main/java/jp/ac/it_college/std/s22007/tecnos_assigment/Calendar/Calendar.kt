@@ -1,6 +1,6 @@
 package jp.ac.it_college.std.s22007.tecnos_assigment.Calendar
 
-import androidx.compose.foundation.background
+import java.time.YearMonth
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,12 +15,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,14 +36,13 @@ import jp.ac.it_college.std.s22007.tecnos_assigment.holidayAPI.GetHoliday
 import jp.ac.it_college.std.s22007.tecnos_assigment.holidayAPI.Holiday
 import jp.ac.it_college.std.s22007.tecnos_assigment.ui.theme.Tecnos_AssigmentTheme
 import java.time.DayOfWeek
+import java.time.DayOfWeek.*
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun CalendarDisplay(
-    modifier: Modifier = Modifier,
-    onDayClick: (LocalDate) -> Unit = {},
+    onDayClick: (CalendarDay) -> Unit = {},
     onClickScheduleButton: () -> Unit = {},
 ) {
     // 現在の年月
@@ -93,7 +93,7 @@ fun CalendarDisplay(
                         onDayClick,
                         onScheduleAdded = { schedule -> updateScheduleList(schedule, scheduleList) },
                         onClickScheduleButton = onClickScheduleButton,
-                        holidays = GetHoliday()
+                        holidays = GetHoliday(),
                     )
                 },
             )
@@ -121,28 +121,36 @@ fun CalendarDisplay(
     }
 }
 
+
 @Composable
 fun Day(
     day: CalendarDay,
-    onDayClick: (LocalDate) -> Unit,
+    onDayClick: (CalendarDay) -> Unit,
     onScheduleAdded: (String) -> Unit,
     onClickScheduleButton: () -> Unit,
     holidays: List<Holiday>
 ) {
+    var selectionDay by remember { mutableStateOf<LocalDate?>(null) }
+    var selection by remember { mutableStateOf<CalendarDay?>(null) }
+
     Box(
         modifier = Modifier
             .aspectRatio(1f)
-            .clickable {
-                onDayClick(day.date) // 日付が選択されたことを通知
-                onClickScheduleButton() // 画面遷移を行う
+            .clickable(enabled = day.position == DayPosition.MonthDate) {
+                selectionDay = day.date
+                selection = day
+                onDayClick(selection!!)
+//            .clickable {
+//                selectionDay = day.date
+//                onDayClick(day) // 日付が選択されたことを通知
+//                onClickScheduleButton() // 画面遷移を行う
             },
         contentAlignment = Alignment.Center
     ) {
         val textColor = when (day.date.dayOfWeek) {
-            DayOfWeek.SATURDAY -> Color.Blue // 土曜日の場合の色
-            DayOfWeek.SUNDAY -> Color.Red // 日曜日の場合の色
+            SATURDAY -> Color.Blue // 土曜日の場合の色
+            SUNDAY -> Color.Red // 日曜日の場合の色
             else -> if (day.position == DayPosition.MonthDate) Color.Black else Color.Gray
-
         }
         val isHoliday = holidays.any { holiday ->
             holiday.date == day.date.toString()
@@ -154,6 +162,9 @@ fun Day(
         )
     }
 }
+
+
+
 @Composable
 fun DaysOfWeekTitle(daysOfWeek: List<DayOfWeek>) {
     Column(
@@ -176,20 +187,7 @@ fun DaysOfWeekTitle(daysOfWeek: List<DayOfWeek>) {
     }
 }
 
-@Composable
-fun CalendarDay(day: CalendarDay, holidays: List<Holiday>, textColor: Color) { // 祝日表示変えた
-    val isHoliday = holidays.any { holiday ->
-        holiday.date == day.date.toString()
-    }
 
-    Text(
-        modifier = Modifier
-            .background(color = if (isHoliday) Color.Yellow else Color.Transparent)
-            .padding(top = 3.dp, start = 4.dp),
-        text = day.date.dayOfMonth.toString(),
-        color = textColor
-    )
-}
 
 fun updateScheduleList(schedule: String, scheduleList: MutableState<List<String>>) {
     scheduleList.value = scheduleList.value + schedule
